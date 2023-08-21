@@ -1,74 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chart Visualization</title>
+    <title>Performance Graph</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-autocolors"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
 </head>
+
 <body>
-    <div>
-        <canvas id="myChart" width="400" height="200"></canvas>
-    </div>
-
+    <canvas id="myChart"></canvas>
     <script>
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color;
-        }
+        fetch("/data")
+            .then((response) => response.json())
+            .then((data) => {
+                const datasets = [];
+                const paperURLs = [];
 
-        fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                // Process your data into a format suitable for Chart.js
-                let labels = [];
-                let datasets = [];
+                Object.entries(data).forEach(([datasetName, datasetData]) => {
+                    Object.entries(datasetData).forEach(([metricName, metricData]) => {
+                        const dates = [];
+                        const values = [];
 
-                for (const [key, value] of Object.entries(data)) {
-                    let dates = value.map(item => item.paper_date);
-                    let accuracies = value.map(item => item.metrics.Accuracy);
+                        Object.entries(metricData).forEach(([date, metricInfo]) => {
+                            dates.push(date);
+                            values.push(metricInfo.value);
+                            paperURLs.push(metricInfo.paper_url);
+                        });
 
-                    labels = dates;
-                    datasets.push({
-                        label: key,
-                        data: accuracies,
-                        fill: false,
-                        borderColor: getRandomColor(),
-                        tension: 0.1
+                        datasets.push({
+                            label: `${datasetName} - ${metricName}`,
+                            data: values,
+                            paperURLs: paperURLs, // Attach paper URLs here
+                            borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
+                            borderWidth: 1,
+                            fill: false,
+                        });
                     });
-                }
-
-                //const autocolors = window['chartjs-plugin-autocolors'];
-                //Chart.register(autocolors);
+                });
 
                 const ctx = document.getElementById('myChart').getContext('2d');
-                const myChart = new Chart(ctx, {
+                const chart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: labels,
-                        datasets: datasets
+                        labels: Object.keys(data[Object.keys(data)[0]][Object.keys(data[Object.keys(data)[0]])[0]]).map((date) => moment(date)),
+                        datasets: datasets,
                     },
                     options: {
-                        plugins: {
-                            //autocolors: {}, // Enable autocolors plugin
-                            legend: {
-                            position: 'right' // Move legend to the right
-                            }
-                        },
                         scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'day',
+                                    displayFormats: {
+                                        day: 'YYYY-MM-DD'
+                                    }
+                                }
+                            },
                             y: {
-                                type: 'linear',
+                                beginAtZero: true,
                             },
                         },
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    footer: function (tooltipItem) {
+                                        return `URL: ${paperURLs[tooltipItem[0].dataIndex]}`;
+                                    },
+                                },
+                            },
+                        },
+                        onClick: function (evt) {
+                            var element = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                            if (element.length) {
+                                var index = element[0].index;
+                                var datasetIndex = element[0].datasetIndex;
+                                var paperURL = chart.data.datasets[datasetIndex].paperURLs[index]; // Now this line will work correctly
+                                window.open(paperURL, '_blank');
+                            }
+                        }
                     },
                 });
             });
+
     </script>
 </body>
+
 </html>
