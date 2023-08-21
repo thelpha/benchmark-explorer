@@ -16,17 +16,39 @@ def get_data():
 
     return data
 
-def filter_data(data):
-    filtered_data = {}
+def process_data(data):
+    processed_data = {}
     one_year_ago = datetime.now() - timedelta(days=365)
 
-    for key, values in data.items():
-        valid_values = [item for item in values if item['paper_date'] is not None and datetime.strptime(item['paper_date'], "%Y-%m-%d") > one_year_ago]
+    for dataset, papers in data.items():
+        processed_papers = {}
+        valid_papers = [paper for paper in papers if paper['paper_date'] is not None and datetime.strptime(paper['paper_date'], "%Y-%m-%d") > one_year_ago]
+        
+        if len(valid_papers) < 10:
+            continue
 
-        if len(valid_values) >= 10:
-            filtered_data[key] = valid_values
+        for paper in valid_papers:
+            date = paper['paper_date']
+            metrics = paper['metrics']
 
-    return filtered_data
+            for metric_name, metric_value in metrics.items():
+                if metric_name not in processed_papers:
+                    processed_papers[metric_name] = {}
+
+                # Convert metric value to a floating-point number
+                #metric_value = float(metric_value)
+
+                # Store the maximum value for the date and attach the paper information
+                if date not in processed_papers[metric_name] or processed_papers[metric_name][date]['value'] < metric_value:
+                    processed_papers[metric_name][date] = {
+                        'value': metric_value,
+                        'paper_title': paper['paper_title'],
+                        'paper_url': paper['paper_url'],
+                    }
+
+        processed_data[dataset] = processed_papers
+
+    return processed_data
 
 def document_schema(data, path="", result=None):
 
