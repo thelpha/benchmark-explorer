@@ -18,25 +18,25 @@ def get_data():
 
 def process_data(data):
     processed_data = {}
-    one_year_ago = datetime.now() - timedelta(days=365)
 
     for dataset, papers in data.items():
         processed_papers = {}
-        valid_papers = [paper for paper in papers if paper['paper_date'] is not None and datetime.strptime(paper['paper_date'], "%Y-%m-%d") > one_year_ago]
-        
-        if len(valid_papers) < 10:
-            continue
+        subtask_metric_recent_counts = {} # Counting recent papers within the last year
 
-        for paper in valid_papers:
+        valid_papers = [paper for paper in papers if paper['paper_date'] is not None]
+
+        for paper in sorted(valid_papers, key=lambda p: p['paper_date']):
             date = paper['paper_date']
             metrics = paper['metrics']
+            recent_date = date is not None and datetime.strptime(date, "%Y-%m-%d") > (datetime.now() - timedelta(days=365))
 
             for metric_name, metric_value in metrics.items():
+                subtask_metric_key = (dataset, metric_name)
+                if recent_date:
+                    subtask_metric_recent_counts[subtask_metric_key] = subtask_metric_recent_counts.get(subtask_metric_key, 0) + 1
+
                 if metric_name not in processed_papers:
                     processed_papers[metric_name] = {}
-
-                # Convert metric value to a floating-point number
-                #metric_value = float(metric_value)
 
                 # Store the maximum value for the date and attach the paper information
                 if date not in processed_papers[metric_name] or processed_papers[metric_name][date]['value'] < metric_value:
@@ -46,9 +46,17 @@ def process_data(data):
                         'paper_url': paper['paper_url'],
                     }
 
-        processed_data[dataset] = processed_papers
+        # Filtering out subtask-metric combinations without recent papers
+        for subtask_metric_key, count in subtask_metric_recent_counts.items():
+            if count >= 10:
+                _, metric_name = subtask_metric_key
+                if metric_name in processed_papers:
+                    if dataset not in processed_data:
+                        processed_data[dataset] = {}
+                    processed_data[dataset][metric_name] = processed_papers[metric_name]
 
     return processed_data
+
 
 def document_schema(data, path="", result=None):
 
