@@ -10,18 +10,22 @@
             Object.entries(datasetData).forEach(([metricName, metricData]) => {
                 const values = [];
                 const localPaperURLs = [];
+                const localPaperTitles = [];
 
                 Object.entries(metricData).forEach(([date, metricInfo]) => {
                     values.push(metricInfo.value);
                     localPaperURLs.push(metricInfo.paper_url);
+                    localPaperTitles.push(metricInfo.paper_title);
                 });
 
-                paperURLs.push(localPaperURLs);
+                // paperURLs.push(localPaperURLs);
+                // paperTitles.push(localPaperTitles);
 
                 datasets.push({
                     label: `${datasetName} - ${metricName}`,
                     data: values,
                     paperURLs: localPaperURLs,
+                    paperTitles: localPaperTitles,
                     tension: 0.4, // Add this line to set the line tension
                     borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
                     borderWidth: 1,
@@ -37,7 +41,9 @@
             type: 'line',
             data: { labels, datasets },
             options: {
-                scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'YYYY-MM-DD' } } }, y: { beginAtZero: true } },
+                scales: { x: { type: 'time', time: { unit: 'year', displayFormats: { day: 'YYYY' }}, grid: {
+                    display: false, // Hide the vertical grid lines
+                } }, y: { beginAtZero: true } },
                 animation: {
     duration: 1000,
     easing: 'easeInOutQuad'
@@ -52,13 +58,20 @@
                         display: {{ showLegend | tojson }},
                         position: 'right',
                     },
-                    tooltip: {
-                        callbacks: {
-                            footer: function (tooltipItem) {
-                                return `URL: ${paperURLs[tooltipItem[0].datasetIndex][tooltipItem[0].dataIndex]}`;
-                            },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItem) {
+                            const datasetIndex = tooltipItem[0].datasetIndex;
+                            const index = tooltipItem[0].dataIndex;
+                            const paperDate = moment(tooltipItem[0].parsed.x).format('YYYY-MM-DD'); // Accessing the X-axis value
+                            return `Date: ${paperDate}\nTitle: ${chart.data.datasets[datasetIndex].paperTitles[index]}`;
                         },
+                        footer: function (tooltipItem) {
+                            const datasetIndex = tooltipItem[0].datasetIndex;
+                            const index = tooltipItem[0].dataIndex;
+                            return `URL: ${chart.data.datasets[datasetIndex].paperURLs[index]}`;                        },
                     },
+                },
                 },
                 onClick: function (evt) {
                     var element = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
