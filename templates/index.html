@@ -13,13 +13,13 @@
 <body>
     {% if data %}
     <div class="chart-container"> <!-- Container for all graphs -->
-        {% set canvas_id = "combinedGraph" %}
+         <!-- {% set canvas_id = "combinedGraph" %}
         {% set graph_data = data %}
         {% set showLegend = true %}
-        <div class="chart-wrapper"> <!-- Individual graph container -->
+       <div class="chart-wrapper"> 
             <h3 class="chart-title">Combined Graph</h3>
             {% include "graph_component.html" %}
-        </div>
+        </div> -->
     
         {% for datasetName, datasetData in data.items() %}
             {% for metricName, metricData in datasetData.items() %}
