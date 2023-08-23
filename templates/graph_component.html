@@ -1,0 +1,70 @@
+<!-- graph_component.html -->
+<canvas id="{{ canvas_id }}"></canvas>
+<script>
+    (function() {
+        const data = {{ graph_data | tojson }};
+        const datasets = [];
+        const paperURLs = [];
+
+        Object.entries(data).forEach(([datasetName, datasetData]) => {
+            Object.entries(datasetData).forEach(([metricName, metricData]) => {
+                const values = [];
+                const localPaperURLs = [];
+
+                Object.entries(metricData).forEach(([date, metricInfo]) => {
+                    values.push(metricInfo.value);
+                    localPaperURLs.push(metricInfo.paper_url);
+                });
+
+                paperURLs.push(localPaperURLs);
+
+                datasets.push({
+                    label: `${datasetName} - ${metricName}`,
+                    data: values,
+                    paperURLs: localPaperURLs,
+                    borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
+                    borderWidth: 1,
+                    fill: false,
+                });
+            });
+        });
+
+        const labels = Object.keys(data[Object.keys(data)[0]][Object.keys(data[Object.keys(data)[0]])[0]]).map((date) => moment(date));
+
+        const ctx = document.getElementById('{{ canvas_id }}').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'YYYY-MM-DD' } } }, y: { beginAtZero: true } },
+
+                plugins: {
+                    title: {
+                    display: {{ title is defined | lower }},
+                    text: '{{ title }}'
+                },
+                    legend: {
+                        display: {{ showLegend | tojson }},
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            footer: function (tooltipItem) {
+                                return `URL: ${paperURLs[tooltipItem[0].datasetIndex][tooltipItem[0].dataIndex]}`;
+                            },
+                        },
+                    },
+                },
+                onClick: function (evt) {
+                    var element = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                    if (element.length) {
+                        var index = element[0].index;
+                        var datasetIndex = element[0].datasetIndex;
+                        var paperURL = chart.data.datasets[datasetIndex].paperURLs[index];
+                        window.open(paperURL, '_blank');
+                    }
+                }
+            },
+        });
+    })();
+</script>
