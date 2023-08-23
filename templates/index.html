@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+</head>
+<body>
+{% if data %}
+    {% set canvas_id = "combinedGraph" %}
+    {% set graph_data = data %}
+    {% set showLegend = true %}
+    {% include "graph_component.html" %}
+    
+    {% for datasetName, datasetData in data.items() %}
+        {% for metricName, metricData in datasetData.items() %}
+        {% set canvas_id = (datasetName ~ "_" ~ metricName) | replace("<", "_lt_") | replace(" ", "_") | replace("&", "and") %}
+        {% set graph_data = {datasetName: {metricName: metricData}} %}
+        {% set title = datasetName ~ " - " ~ metricName %}
+        {% set showLegend = false %}
+        {% include "graph_component.html" %}
+        {% endfor %}
+    {% endfor %}
+{% else %}
+	<p>No data available.</p>
+{% endif %}
+
+</body>
+
+</html>
