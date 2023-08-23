@@ -22,6 +22,7 @@
                     label: `${datasetName} - ${metricName}`,
                     data: values,
                     paperURLs: localPaperURLs,
+                    tension: 0.4, // Add this line to set the line tension
                     borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
                     borderWidth: 1,
                     fill: false,
@@ -37,6 +38,10 @@
             data: { labels, datasets },
             options: {
                 scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'YYYY-MM-DD' } } }, y: { beginAtZero: true } },
+                animation: {
+    duration: 1000,
+    easing: 'easeInOutQuad'
+},
 
                 plugins: {
                     title: {
