@@ -13,15 +13,15 @@
 <body>
     {% if data %}
     <div class="chart-container"> <!-- Container for all graphs -->
-    
+        
         {% for datasetName, datasetData in data.items() %}
-            {% for metricName, metricData in datasetData.items() %}
+            {% for metricName, metricData in datasetData['metrics'].items() %} <!-- Modified line -->
             {% set canvas_id = (datasetName ~ "_" ~ metricName) | replace("<", "_lt_") | replace(" ", "_") | replace("&", "and") %}
             {% set graph_data = {datasetName: {metricName: metricData}} %}
             {% set title = datasetName ~ " - " ~ metricName %}
             {% set showLegend = false %}
             <div class="chart-wrapper"> <!-- Individual graph container -->
-                <!-- <h3 class="chart-title">{{ title }}</h3> -->
+                <h3 class="chart-title"><a href="{{ datasetData['dataset_link'] }}">{{ title }}</a></h3> <!-- Modified line -->
                 {% include "graph_component.html" %}
             </div>
             {% endfor %}

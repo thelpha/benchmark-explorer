@@ -15,11 +15,14 @@ def get_data():
     data = json.loads(decompressed_content)
 
     return data
-
 def process_data(data):
     processed_data = {}
 
-    for dataset, papers in data.items():
+    for dataset_info in data['datasets']:
+        dataset = dataset_info['dataset']
+        dataset_link = dataset_info['dataset_links'][0]['url'] if dataset_info['dataset_links'] else None
+        papers = dataset_info['sota']['rows']
+        
         processed_papers = {}
         subtask_metric_recent_counts = {} # Counting recent papers within the last year
 
@@ -48,15 +51,14 @@ def process_data(data):
 
         # Filtering out subtask-metric combinations without recent papers
         for subtask_metric_key, count in subtask_metric_recent_counts.items():
-            if count >= 10:
+            if count >= 5:
                 _, metric_name = subtask_metric_key
                 if metric_name in processed_papers:
                     if dataset not in processed_data:
-                        processed_data[dataset] = {}
-                    processed_data[dataset][metric_name] = processed_papers[metric_name]
+                        processed_data[dataset] = {'dataset_link': dataset_link, 'metrics': {}}
+                    processed_data[dataset]['metrics'][metric_name] = processed_papers[metric_name]
 
     return processed_data
-
 
 def document_schema(data, path="", result=None):
 
