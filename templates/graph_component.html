@@ -4,7 +4,6 @@
     (function() {
         const data = {{ graph_data | tojson }};
         const datasets = [];
-        const paperURLs = [];
 
         Object.entries(data).forEach(([datasetName, datasetData]) => {
             Object.entries(datasetData).forEach(([metricName, metricData]) => {
@@ -18,18 +17,47 @@
                     localPaperTitles.push(metricInfo.paper_title);
                 });
 
-                // paperURLs.push(localPaperURLs);
-                // paperTitles.push(localPaperTitles);
-
                 datasets.push({
                     label: `${datasetName} - ${metricName}`,
                     data: values,
                     paperURLs: localPaperURLs,
                     paperTitles: localPaperTitles,
-                    tension: 0.4, // Add this line to set the line tension
+                    tension: 0.4,
                     borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
+                    borderWidth: 0,
+                    fill: false,
+                });
+
+                // Prepare the maximum values for the line
+                let currentMax = -Infinity;
+                const maxLineData = values.map((value) => {
+                    if (value > currentMax) currentMax = value;
+                    return currentMax;
+                });
+                datasets.push({
+                    label: `${datasetName} - ${metricName} (Max Line)`,
+                    data: maxLineData,
+                    tension: 0.1,
+                    borderColor: 'red',
                     borderWidth: 1,
                     fill: false,
+                    pointRadius: 0,
+                });
+
+                // Prepare the minimum values for the line
+                let currentMin = Infinity;
+                const minLineData = values.map((value) => {
+                    if (value < currentMin) currentMin = value;
+                    return currentMin;
+                });
+                datasets.push({
+                    label: `${datasetName} - ${metricName} (Min Line)`,
+                    data: minLineData,
+                    tension: 0.1,
+                    borderColor: 'blue',
+                    borderWidth: 1,
+                    fill: false,
+                    pointRadius: 0,
                 });
             });
         });
@@ -48,7 +76,6 @@
     duration: 1000,
     easing: 'easeInOutQuad'
 },
-
                 plugins: {
                     title: {
                     display: {{ title is defined | lower }},
@@ -86,3 +113,4 @@
         });
     })();
 </script>
+
