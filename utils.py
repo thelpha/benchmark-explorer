@@ -15,17 +15,16 @@ def get_data():
     data = json.loads(decompressed_content)
 
     return data
+
 def process_data(data):
     processed_data = {}
 
-    for dataset_info in data['datasets']:
-        dataset = dataset_info['dataset']
-        dataset_link = dataset_info['dataset_links'][0]['url'] if dataset_info['dataset_links'] else None
-        papers = dataset_info['sota']['rows']
-        
+    for dataset, details in data.items():
         processed_papers = {}
-        subtask_metric_recent_counts = {} # Counting recent papers within the last year
+        dataset_links = details.get('dataset_links', [])  # Extract dataset_links
+        papers = details['sota_rows']  # Adjust for the nested structure
 
+        subtask_metric_recent_counts = {}  # Counting recent papers within the last year
         valid_papers = [paper for paper in papers if paper['paper_date'] is not None]
 
         for paper in sorted(valid_papers, key=lambda p: p['paper_date']):
@@ -49,16 +48,17 @@ def process_data(data):
                         'paper_url': paper['paper_url'],
                     }
 
-        # Filtering out subtask-metric combinations without recent papers
+      # Filtering out subtask-metric combinations without recent papers
         for subtask_metric_key, count in subtask_metric_recent_counts.items():
             if count >= 5:
                 _, metric_name = subtask_metric_key
                 if metric_name in processed_papers:
                     if dataset not in processed_data:
-                        processed_data[dataset] = {'dataset_link': dataset_link, 'metrics': {}}
-                    processed_data[dataset]['metrics'][metric_name] = processed_papers[metric_name]
+                        processed_data[dataset] = {'sota_rows': {}, 'dataset_links': dataset_links}  # Include dataset_links
+                    processed_data[dataset]['sota_rows'][metric_name] = processed_papers[metric_name]
 
     return processed_data
+
 
 def document_schema(data, path="", result=None):
 
@@ -92,7 +92,8 @@ def process_subtask(subtask, results):
         for dataset in subtask['datasets']:
             dataset_name = dataset['dataset']
             sota_rows = dataset['sota']['rows'] if 'sota' in dataset else []
-            results[dataset_name] = sota_rows
+            dataset_links = dataset.get('dataset_links', [])
+            results[dataset_name] = {'sota_rows': sota_rows, 'dataset_links': dataset_links}
 
     # Process any sub-subtasks
     if 'subtasks' in subtask:
