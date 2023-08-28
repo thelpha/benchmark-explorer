@@ -18,6 +18,16 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Slightly pronounced shadow on hover */
 }
 
+
+.chart-category {
+    font-weight: 900;
+    font-size: .8em;
+    /* margin-bottom: 10px; */
+    font-family: 'Roboto', sans-serif;
+    color: #464646;    text-align: center;
+    position: relative; /* Relative positioning for the child icon */
+  }
+
 .chart-title {
     font-weight: 300;
     font-size: .8em;

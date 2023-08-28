@@ -22,6 +22,8 @@ def process_data(data):
     for dataset, details in data.items():
         processed_papers = {}
         dataset_links = details.get('dataset_links', [])  # Extract dataset_links
+        task = details.get('task', '')
+        subtask_description = details.get('subtask_description', '')
         papers = details['sota_rows']  # Adjust for the nested structure
 
         subtask_metric_recent_counts = {}  # Counting recent papers within the last year
@@ -54,7 +56,12 @@ def process_data(data):
                 _, metric_name = subtask_metric_key
                 if metric_name in processed_papers:
                     if dataset not in processed_data:
-                        processed_data[dataset] = {'sota_rows': {}, 'dataset_links': dataset_links}  # Include dataset_links
+                        processed_data[dataset] = {
+                            'sota_rows': {},
+                            'dataset_links': dataset_links,
+                            'task': task,
+                            'subtask_description': subtask_description
+                        }
                     processed_data[dataset]['sota_rows'][metric_name] = processed_papers[metric_name]
 
     return processed_data
@@ -93,7 +100,14 @@ def process_subtask(subtask, results):
             dataset_name = dataset['dataset']
             sota_rows = dataset['sota']['rows'] if 'sota' in dataset else []
             dataset_links = dataset.get('dataset_links', [])
-            results[dataset_name] = {'sota_rows': sota_rows, 'dataset_links': dataset_links}
+            task = subtask.get('task', '')
+            subtask_description = subtask.get('description', '')
+            results[dataset_name] = {
+                'sota_rows': sota_rows,
+                'dataset_links': dataset_links,
+                'task': task,
+                'subtask_description': subtask_description
+            }
 
     # Process any sub-subtasks
     if 'subtasks' in subtask:
