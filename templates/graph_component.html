@@ -4,6 +4,8 @@
     (function() {
         const data = {{ graph_data | tojson }};
         const datasets = [];
+        let lastMaxTimestamp = null;
+        let lastMinTimestamp = null;
 
         Object.entries(data).forEach(([datasetName, datasetData]) => {
             Object.entries(datasetData).forEach(([metricName, metricData]) => {
@@ -11,10 +13,29 @@
                 const localPaperURLs = [];
                 const localPaperTitles = [];
 
+                let currentMax = -Infinity;
+                let currentMin = Infinity;
+                const maxLineData = [];
+                const minLineData = [];
+
                 Object.entries(metricData).forEach(([date, metricInfo]) => {
-                    values.push(metricInfo.value);
+                    const value = metricInfo.value;
+                    values.push(value);
                     localPaperURLs.push(metricInfo.paper_url);
                     localPaperTitles.push(metricInfo.paper_title);
+
+                    if (value > currentMax) {
+                        currentMax = value;
+                        lastMaxTimestamp = date;
+                    }
+
+                    if (value < currentMin) {
+                        currentMin = value;
+                        lastMinTimestamp = date;
+                    }
+
+                    maxLineData.push(currentMax);
+                    minLineData.push(currentMin);
                 });
 
                 datasets.push({
@@ -28,77 +49,57 @@
                     fill: false,
                 });
 
-                // Prepare the maximum values for the line
-                let currentMax = -Infinity;
-                const maxLineData = values.map((value) => {
-                    if (value > currentMax) currentMax = value;
-                    return currentMax;
-                });
-                datasets.push({
-                    label: `${datasetName} - ${metricName} (Max Line)`,
-                    data: maxLineData,
-                    tension: 0.1,
-                    borderColor: 'red',
-                    borderWidth: 1,
-                    fill: false,
-                    pointRadius: 0,
-                });
-
-                // Prepare the minimum values for the line
-                let currentMin = Infinity;
-                const minLineData = values.map((value) => {
-                    if (value < currentMin) currentMin = value;
-                    return currentMin;
-                });
-                datasets.push({
-                    label: `${datasetName} - ${metricName} (Min Line)`,
-                    data: minLineData,
-                    tension: 0.1,
-                    borderColor: 'blue',
-                    borderWidth: 1,
-                    fill: false,
-                    pointRadius: 0,
-                });
+                if (lastMaxTimestamp > lastMinTimestamp) {
+                    datasets.push({
+                        label: `${datasetName} - ${metricName} (Max Line)`,
+                        data: maxLineData,
+                        tension: 0.1,
+                        borderColor: 'red',
+                        borderWidth: 1,
+                        fill: false,
+                        pointRadius: 0,
+                    });
+                } else {
+                    datasets.push({
+                        label: `${datasetName} - ${metricName} (Min Line)`,
+                        data: minLineData,
+                        tension: 0.1,
+                        borderColor: 'blue',
+                        borderWidth: 1,
+                        fill: false,
+                        pointRadius: 0,
+                    });
+                }
             });
         });
 
         const labels = Object.keys(data[Object.keys(data)[0]][Object.keys(data[Object.keys(data)[0]])[0]]).map((date) => moment(date));
-
+        
         const ctx = document.getElementById('{{ canvas_id }}').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
             data: { labels, datasets },
             options: {
-                scales: { x: { type: 'time', time: { unit: 'year', displayFormats: { day: 'YYYY' }}, grid: {
-                    display: false, // Hide the vertical grid lines
-                } }, y: { beginAtZero: true } },
-                animation: {
-    duration: 1000,
-    easing: 'easeInOutQuad'
-},
+                scales: { x: { type: 'time', time: { unit: 'year', displayFormats: { day: 'YYYY' }}, grid: { display: false } }, y: { beginAtZero: true } },
+                animation: { duration: 1000, easing: 'easeInOutQuad' },
                 plugins: {
-                    title: {
-                    display: {{ show_title | lower }},
-                    text: '{{ title }}'
-                },
-                    legend: {
-                        display: {{ showLegend | tojson }},
-                        position: 'right',
-                    },
-                tooltip: {
-                    callbacks: {
-                        title: function(tooltipItem) {
-                            const datasetIndex = tooltipItem[0].datasetIndex;
-                            const index = tooltipItem[0].dataIndex;
-                            const paperDate = moment(tooltipItem[0].parsed.x).format('YYYY-MM-DD'); // Accessing the X-axis value
-                            return `Date: ${paperDate}\nTitle: ${chart.data.datasets[datasetIndex].paperTitles[index]}`;
+                    title: { display: {{ show_title | lower }}, text: '{{ title }}' },
+                    legend: { display: {{ showLegend | tojson }}, position: 'right' },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItem) {
+                                const datasetIndex = tooltipItem[0].datasetIndex;
+                                const index = tooltipItem[0].dataIndex;
+                                const paperDate = moment(tooltipItem[0].parsed.x).format('YYYY-MM-DD');
+                                return `Date: ${paperDate}\nTitle: ${chart.data.datasets[datasetIndex].paperTitles[index]}`;
+                            },
+                            footer: function (tooltipItem) {
+                                const datasetIndex = tooltipItem[0].datasetIndex;
+                                const index = tooltipItem[0].dataIndex;
+                                return `URL: ${chart.data.datasets[datasetIndex].paperURLs[index]}`;
+                            },
                         },
-                        footer: function (tooltipItem) {
-                            const datasetIndex = tooltipItem[0].datasetIndex;
-                            const index = tooltipItem[0].dataIndex;
-                            return `URL: ${chart.data.datasets[datasetIndex].paperURLs[index]}`;                        },
                     },
-                },
                 },
                 onClick: function (evt) {
                     var element = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
@@ -113,4 +114,3 @@
         });
     })();
 </script>
-
