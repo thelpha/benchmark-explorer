@@ -2,91 +2,105 @@ from datetime import datetime, timedelta
 import requests
 import gzip
 import json
-from collections import defaultdict
 
-def get_data(url = "https://production-media.paperswithcode.com/about/evaluation-tables.json.gz"):
+def get_data():
+
+    url = "https://production-media.paperswithcode.com/about/evaluation-tables.json.gz"
     response = requests.get(url)
-    return json.loads(gzip.decompress(response.content))
 
-def process_papers(papers):
-    """
-    Process a list of papers to aggregate metric values.
-    Also counts how many recent papers have contributed to each metric.
-    """
-    processed = defaultdict(dict)
-    recent_counts = {}
-    valid_papers = [p for p in papers if p['paper_date']]
+    # Decompress the gzipped content
+    decompressed_content = gzip.decompress(response.content)
 
-    for paper in sorted(valid_papers, key=lambda p: p['paper_date']):
-        date = paper['paper_date']
-        is_recent = datetime.strptime(date, "%Y-%m-%d") > (datetime.now() - timedelta(days=365))
-        
-        for metric, value in paper['metrics'].items():
-            if is_recent:
-                recent_counts[metric] = recent_counts.get(metric, 0) + 1
+    # Parse the JSON content
+    data = json.loads(decompressed_content)
 
-            # Update metric only if new value is greater
-            if date not in processed[metric] or processed[metric][date]['value'] < value:
-                processed[metric][date] = {'value': value, 'paper_title': paper['paper_title'], 'paper_url': paper['paper_url']}
+    return data
 
-    return processed, recent_counts
 
 def process_data(data):
-    """Process the raw data to compile a summary of SOTA metrics by dataset."""
     processed_data = {}
-    
+
     for dataset, details in data.items():
-        dataset_info = {
-            'dataset_links': details.get('dataset_links', []),
-            'task': details.get('task', ''),
-            'subtask_description': details.get('subtask_description', '')
+        processed_papers = {}
+        dataset_links = details.get('dataset_links', [])
+        task = details.get('task', '')
+        subtask_description = details.get('subtask_description', '')
+        papers = details['sota_rows']
+
+        # Filter out papers without a date and sort the remaining by date
+        valid_papers = [paper for paper in papers if paper['paper_date'] is not None]
+        for paper in sorted(valid_papers, key=lambda p: datetime.strptime(p['paper_date'], "%Y-%m-%d")):
+            date = paper['paper_date']
+            metrics = paper.get('metrics', {})
+
+            for metric_name, metric_value in metrics.items():
+                if metric_name not in processed_papers:
+                    processed_papers[metric_name] = {}
+
+                if date not in processed_papers[metric_name] or processed_papers[metric_name][date]['value'] < metric_value:
+                    processed_papers[metric_name][date] = {
+                        'value': metric_value,
+                        'paper_title': paper['paper_title'],
+                        'paper_url': paper['paper_url'],
+                    }
+
+        processed_data[dataset] = {
+            'sota_rows': processed_papers,
+            'dataset_links': dataset_links,
+            'task': task,
+            'subtask_description': subtask_description
         }
-        
-        processed_papers, recent_counts = process_papers(details['sota_rows'])
-        
-        # Only include metrics with 5 or more recent papers
-        for metric, count in recent_counts.items():
-            if count >= 5 and metric in processed_papers:
-                if dataset not in processed_data:
-                    processed_data[dataset] = dataset_info
-                processed_data[dataset].setdefault('sota_rows', {})[metric] = processed_papers[metric]
-                
+
     return processed_data
 
 def document_schema(data, path="", result=None):
-    """Recursively document the schema of nested dictionaries and lists."""
+
+    from collections import defaultdict
+
     if result is None:
         result = defaultdict(set)
-        
+
     if isinstance(data, dict):
         for key, value in data.items():
-            document_schema(value, f"{path}/{key}" if path else key, result)
+            new_path = f"{path}/{key}" if path else key
+            if isinstance(value, (list, dict)):
+                document_schema(value, new_path, result)
+            else:
+                result[new_path].add(value)
     elif isinstance(data, list):
         for item in data:
             document_schema(item, path, result)
-    else:
-        result[path].add(type(data).__name__)
-        
+
     return result
 
 def summarize_schema(schema):
-    """Summarize schema by removing list indices and consolidating types."""
-    return {"/".join([part.split("[")[0] for part in key.split("/")]): list(values) for key, values in schema.items()}
+    summary = {}
+    for key, values in schema.items():
+        cleaned_key = "/".join([part.split("[")[0] for part in key.split("/")])
+        summary[cleaned_key] = list(values)
+    return summary
 
 def process_subtask(subtask, results):
-    """Recursively process subtasks and their datasets to populate results."""
-    for dataset in subtask.get('datasets', []):
-        results[dataset['dataset']] = {
-            'sota_rows': dataset.get('sota', {}).get('rows', []),
-            'dataset_links': dataset.get('dataset_links', []),
-            'task': subtask.get('task', ''),
-            'subtask_description': subtask.get('description', '')
-        }
-    for child in subtask.get('subtasks', []):
-        process_subtask(child, results)
+    if 'datasets' in subtask:
+        for dataset in subtask['datasets']:
+            dataset_name = dataset['dataset']
+            sota_rows = dataset.get('sota', {}).get('rows', [])
+            dataset_links = dataset.get('dataset_links', [])
+            task = subtask.get('task', '')
+            subtask_description = subtask.get('description', '')
+            
+            results[dataset_name] = {
+                'sota_rows': sota_rows,
+                'dataset_links': dataset_links,
+                'task': task,
+                'subtask_description': subtask_description
+            }
+
+    if 'subtasks' in subtask:
+        for child_subtask in subtask['subtasks']:
+            process_subtask(child_subtask, results)
 
 def process_json(data):
-    """Process the root level of the JSON data."""
     results = {}
     for task in data:
         for subtask in task['subtasks']:
