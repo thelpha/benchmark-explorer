@@ -71,8 +71,9 @@ def process_data(data):
         attributes = {k: v for k, v in data.items() if not isinstance(v, list)}
         for metric, metric_list in data.items():
             if isinstance(metric_list, list):
+                distinct_dates = set([paper['date'] for paper in metric_list])
                 new_entry = {'dataset': dataset, 'metric': metric, 'papers':metric_list, **attributes}
-                if len(new_entry['papers']) >= 3: #Limit to datasets with at least 3 papers
+                if len(distinct_dates) >= 3: #Limit to datasets with at least 3 papers
                     data_list.append(new_entry)
 
     return data_dict, sorted(data_list, key=lambda x: get_most_recent_extreme_date(x['papers']), reverse=True)
