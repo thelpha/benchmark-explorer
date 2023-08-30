@@ -16,42 +16,66 @@ def get_data():
 
     return data
 
+def get_most_recent_extreme_date(papers):
+    if not papers:
+        return datetime.min
+    papers = [{'date': datetime.strptime(p['date'], '%Y-%m-%d'), 'value': float(p['value'])} for p in papers]
+    max_date = max(p['date'] for p in papers if p['value'] == max(p['value'] for p in papers))
+    min_date = max(p['date'] for p in papers if p['value'] == min(p['value'] for p in papers))
+    return max(max_date, min_date)
+
 
 def process_data(data):
-    processed_data = {}
+    data_dict = {}
 
     for dataset, details in data.items():
-        processed_papers = {}
-        dataset_links = details.get('dataset_links', [])
+
+        dataset_links = details.get('dataset_links',[])[0]
         task = details.get('task', '')
         subtask_description = details.get('subtask_description', '')
         papers = details['sota_rows']
+
+        data_dict[dataset] = {
+            'dataset_links': dataset_links,
+            'task': task,
+            'subtask_description': subtask_description
+        }
 
         # Filter out papers without a date and sort the remaining by date
         valid_papers = [paper for paper in papers if paper['paper_date'] is not None]
         for paper in sorted(valid_papers, key=lambda p: datetime.strptime(p['paper_date'], "%Y-%m-%d")):
             date = paper['paper_date']
             metrics = paper.get('metrics', {})
+        
+            # Add each metric to the corresponding paper list at the level of data_dict[dataset][metric_name]
 
             for metric_name, metric_value in metrics.items():
-                if metric_name not in processed_papers:
-                    processed_papers[metric_name] = {}
+                #Confirm that metric has a numeric value
+                try:
+                    metric_value = float(metric_value)
 
-                if date not in processed_papers[metric_name] or processed_papers[metric_name][date]['value'] < metric_value:
-                    processed_papers[metric_name][date] = {
-                        'value': metric_value,
-                        'paper_title': paper['paper_title'],
-                        'paper_url': paper['paper_url'],
-                    }
+                    data_dict[dataset].setdefault(metric_name, []).append({
+                            'date': date,
+                            'value': metric_value,
+                            'paper_title': paper['paper_title'],
+                            'paper_url': paper['paper_url'],
+                            'model_name': paper['model_name'],
+                    })
+                
+                except ValueError:
+                    continue
+        
+    data_list = []
 
-        processed_data[dataset] = {
-            'sota_rows': processed_papers,
-            'dataset_links': dataset_links,
-            'task': task,
-            'subtask_description': subtask_description
-        }
+    for dataset, data in data_dict.items():
+        attributes = {k: v for k, v in data.items() if not isinstance(v, list)}
+        for metric, metric_list in data.items():
+            if isinstance(metric_list, list):
+                new_entry = {'dataset': dataset, 'metric': metric, 'papers':metric_list, **attributes}
+                if len(new_entry['papers']) >= 3: #Limit to datasets with at least 3 papers
+                    data_list.append(new_entry)
 
-    return processed_data
+    return data_dict, sorted(data_list, key=lambda x: get_most_recent_extreme_date(x['papers']), reverse=True)
 
 def document_schema(data, path="", result=None):
 

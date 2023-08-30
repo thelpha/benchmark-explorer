@@ -14,28 +14,26 @@
     {% if data %}
     <div class="chart-container"> <!-- Container for all graphs -->
     
-        {% for datasetName, datasetDetails in data.items() %}
-            {% for metricName, metricData in datasetDetails['sota_rows'].items() %}
-                {% if metricData|length >= 6 %}
+        {% for data_dict in data %}
+                {% set datasetName = data_dict['dataset'] %}
+                {% set metricName = data_dict['metric'] %}
                 {% set canvas_id = (datasetName ~ "_" ~ metricName) | replace("<", "_lt_") | replace(" ", "_") | replace("&", "and") %}
-                {% set graph_data = {datasetName: {metricName: metricData}} %}
-                {% set task = datasetDetails['task'] %}
+                {% set graph_data = {datasetName: {metricName: data_dict['papers']}} %}
+                {% set task = data_dict['task'] %}
                 {% set title = datasetName ~ " - " ~ metricName %}
                 {% set show_title = false %}
                 {% set showLegend = false %}
                 <div class="chart-wrapper"> <!-- Individual graph container -->
                     <h2 class="chart-category">{{ task }}</h2>
                     <h3 class="chart-title">
-                        {% if datasetDetails['dataset_links'] %}
-                            <a href="{{ datasetDetails['dataset_links'][0]['url'] }}" target="_blank">{{ title }}</a>
+                        {% if data_dict['dataset_links'] %}
+                            <a href="{{ data_dict['dataset_links']['url'] }}" target="_blank">{{ title }}</a>
                         {% else %}
                             {{ title }}
                         {% endif %}
                     </h3> <!-- Link to dataset -->               
                     {% include "graph_component.html" %}
                 </div>
-                {% endif %}
-            {% endfor %}
         {% endfor %}
     </div>
     {% else %}

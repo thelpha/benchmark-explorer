@@ -8,7 +8,7 @@
         let lastMinTimestamp = null;
 
         Object.entries(data).forEach(([datasetName, datasetData]) => {
-            Object.entries(datasetData).forEach(([metricName, metricData]) => {
+            Object.entries(datasetData).forEach(([metricName, metricArray]) => {
                 const values = [];
                 const localPaperURLs = [];
                 const localPaperTitles = [];
@@ -18,11 +18,10 @@
                 const maxLineData = [];
                 const minLineData = [];
 
-                Object.entries(metricData).forEach(([date, metricInfo]) => {
-                    const value = metricInfo.value;
+                metricArray.forEach(({ date, value, paper_url, paper_title }) => {
                     values.push(value);
-                    localPaperURLs.push(metricInfo.paper_url);
-                    localPaperTitles.push(metricInfo.paper_title);
+                    localPaperURLs.push(paper_url);
+                    localPaperTitles.push(paper_title);
 
                     if (value > currentMax) {
                         currentMax = value;
@@ -73,7 +72,7 @@
             });
         });
 
-        const labels = Object.keys(data[Object.keys(data)[0]][Object.keys(data[Object.keys(data)[0]])[0]]).map((date) => moment(date));
+        const labels = data[Object.keys(data)[0]][Object.keys(data[Object.keys(data)[0]])[0]].map(item => moment(item.date));
         
         const ctx = document.getElementById('{{ canvas_id }}').getContext('2d');
         const chart = new Chart(ctx, {

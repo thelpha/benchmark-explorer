@@ -10,7 +10,7 @@ import utils
 app = FastAPI()
 
 raw = utils.get_data()
-data = utils.process_data(utils.process_json(raw))
+data_dict, data_list = utils.process_data(utils.process_json(raw))
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -18,11 +18,11 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request,"data": data})
+    return templates.TemplateResponse("index.html", {"request": request,"data": data_list})
 
 @app.get("/data")
 def get_data():
-    return data
+    return data_dict
 
 if __name__ == "__main__":
     import uvicorn
