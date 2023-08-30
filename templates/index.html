@@ -8,38 +8,81 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+
     <link rel="stylesheet" href="/static/css/benchmarkexplorer.css">
+    <link rel="stylesheet" href="/static/css/chota.min.css">
 </head>
+
 <body>
+    <input type="text" id="searchBar" placeholder="Search...">
+
     {% if data %}
     <div class="chart-container"> <!-- Container for all graphs -->
+
+        <script>
+            const searchBar = document.getElementById('searchBar');
+            const chartContainer = document.querySelector('.chart-container');
     
+            searchBar.addEventListener('keyup', function (e) {
+                const searchString = e.target.value.toLowerCase();
+    
+                Array.from(chartContainer.children).forEach(graph => {
+                    const task = graph.querySelector('.chart-category') ? graph.querySelector('.chart-category').textContent.toLowerCase() : '';
+                    const title = graph.querySelector('.chart-title') ? graph.querySelector('.chart-title').textContent.toLowerCase() : '';
+    
+                    if (task.includes(searchString) || title.includes(searchString)) {
+                        graph.style.display = 'block';
+                    } else {
+                        graph.style.display = 'none';
+                    }
+                });
+            });
+        </script>
+
         {% for data_dict in data %}
-                {% set datasetName = data_dict['dataset'] %}
-                {% set metricName = data_dict['metric'] %}
-                {% set canvas_id = (datasetName ~ "_" ~ metricName) | replace("<", "_lt_") | replace(" ", "_") | replace("&", "and") %}
-                {% set graph_data = {datasetName: {metricName: data_dict['papers']}} %}
-                {% set task = data_dict['task'] %}
-                {% set title = datasetName ~ " - " ~ metricName %}
-                {% set show_title = false %}
-                {% set showLegend = false %}
-                <div class="chart-wrapper"> <!-- Individual graph container -->
-                    <h2 class="chart-category">{{ task }}</h2>
-                    <h3 class="chart-title">
-                        {% if data_dict['dataset_links'] %}
-                            <a href="{{ data_dict['dataset_links']['url'] }}" target="_blank">{{ title }}</a>
-                        {% else %}
-                            {{ title }}
-                        {% endif %}
-                    </h3> <!-- Link to dataset -->               
-                    {% include "graph_component.html" %}
-                </div>
+            {% set datasetName = data_dict['dataset'] %}
+            {% set metricName = data_dict['metric'] %}
+            {% set canvas_id = (datasetName ~ "_" ~ metricName) | regex_replace("[^a-zA-Z0-9]", "") %}
+            {% set graph_data = {datasetName: {metricName: data_dict['papers']}} %}
+            {% set task = data_dict['task'] %}
+            {% set title = datasetName ~ " - " ~ metricName %}
+            {% set show_title = false %}
+            {% set showLegend = false %}
+            <div class="chart-wrapper"> <!-- Individual graph container -->
+                <h2 class="chart-category">{{ task }}</h2>
+                <h3 class="chart-title">
+                    {% if data_dict['dataset_links'] %}
+                    <a href="{{ data_dict['dataset_links']['url'] }}" target="_blank">{{ title }}</a>
+                    {% else %}
+                    {{ title }}
+                    {% endif %}
+                </h3> <!-- Link to dataset -->
+                {% include "graph_component.html" %}
+            </div>
         {% endfor %}
     </div>
     {% else %}
-        <p>No data available.</p>
+    <p>No data available.</p>
     {% endif %}
-    
+    <script>
+        const searchBar = document.getElementById('searchBar');
+        const chartContainer = document.querySelector('.chart-container');
+
+        searchBar.addEventListener('keyup', function (e) {
+            const searchString = e.target.value.toLowerCase();
+
+            Array.from(chartContainer.children).forEach(graph => {
+                const task = graph.querySelector('.chart-category') ? graph.querySelector('.chart-category').textContent.toLowerCase() : '';
+                const title = graph.querySelector('.chart-title') ? graph.querySelector('.chart-title').textContent.toLowerCase() : '';
+
+                if (task.includes(searchString) || title.includes(searchString)) {
+                    graph.style.display = 'block';
+                } else {
+                    graph.style.display = 'none';
+                }
+            });
+        });
+    </script>
 
 </body>
 

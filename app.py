@@ -4,8 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 
-import json
 import utils
+from jinja2 import Environment
 
 app = FastAPI()
 
@@ -15,6 +15,8 @@ data_dict, data_list = utils.process_data(utils.process_json(raw))
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+env = templates.env
+env.filters['regex_replace'] = utils.regex_replace
 
 @app.get("/")
 async def index(request: Request):

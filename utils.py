@@ -2,6 +2,11 @@ from datetime import datetime, timedelta
 import requests
 import gzip
 import json
+import re
+
+def regex_replace(value, pattern, replacement=""):
+    return re.sub(pattern, replacement, value)
+
 
 def get_data():
 
