@@ -64,25 +64,6 @@
     {% else %}
     <p>No data available.</p>
     {% endif %}
-    <script>
-        const searchBar = document.getElementById('searchBar');
-        const chartContainer = document.querySelector('.chart-container');
-
-        searchBar.addEventListener('keyup', function (e) {
-            const searchString = e.target.value.toLowerCase();
-
-            Array.from(chartContainer.children).forEach(graph => {
-                const task = graph.querySelector('.chart-category') ? graph.querySelector('.chart-category').textContent.toLowerCase() : '';
-                const title = graph.querySelector('.chart-title') ? graph.querySelector('.chart-title').textContent.toLowerCase() : '';
-
-                if (task.includes(searchString) || title.includes(searchString)) {
-                    graph.style.display = 'block';
-                } else {
-                    graph.style.display = 'none';
-                }
-            });
-        });
-    </script>
 
 </body>
 
