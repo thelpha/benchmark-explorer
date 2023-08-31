@@ -46,6 +46,8 @@
                     borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
                     borderWidth: 0,
                     fill: false,
+                    pointRadius: 4,
+                    pointHoverBorderWidth: 2 // hover border width
                 });
 
                 if (lastMaxTimestamp > lastMinTimestamp) {
@@ -53,8 +55,8 @@
                         label: `${datasetName} - ${metricName} (Max Line)`,
                         data: maxLineData,
                         tension: 0.1,
-                        borderColor: 'red',
-                        borderWidth: 1,
+                        borderColor: 'teal',
+                        borderWidth: 1.5,
                         fill: false,
                         pointRadius: 0,
                     });
@@ -63,8 +65,8 @@
                         label: `${datasetName} - ${metricName} (Min Line)`,
                         data: minLineData,
                         tension: 0.1,
-                        borderColor: 'blue',
-                        borderWidth: 1,
+                        borderColor: 'purple',
+                        borderWidth: 1.5,
                         fill: false,
                         pointRadius: 0,
                     });
