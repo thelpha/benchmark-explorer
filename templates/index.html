@@ -19,11 +19,6 @@
     {% if data %}
     <div class="chart-container"> <!-- Container for all graphs -->
 
-        <script>
-
-
-        </script>
-
         {% for data_dict in data %}
         {% set datasetName = data_dict['dataset'] %}
         {% set metricName = data_dict['metric'] %}
