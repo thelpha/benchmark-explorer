@@ -14,6 +14,8 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
 
             let currentMax = -Infinity;
             let currentMin = Infinity;
+            let maxChangeCount = 0;
+            let minChangeCount = 0;
             const maxLineData = [];
             const minLineData = [];
 
@@ -25,13 +27,14 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
                 if (value > currentMax) {
                     currentMax = value;
                     lastMaxTimestamp = date;
+                    maxChangeCount++;
                 }
-
+            
                 if (value < currentMin) {
                     currentMin = value;
                     lastMinTimestamp = date;
+                    minChangeCount++;
                 }
-
                 maxLineData.push(currentMax);
                 minLineData.push(currentMin);
             });
@@ -49,7 +52,7 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
                 pointHoverBorderWidth: 2 // hover border width
             });
 
-            if (lastMaxTimestamp > lastMinTimestamp) {
+            if (maxChangeCount > minChangeCount) {
                 datasets.push({
                     label: `${datasetName} - ${metricName} (Max Line)`,
                     data: maxLineData,
