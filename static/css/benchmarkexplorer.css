@@ -3,6 +3,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 10px;
+  padding-right: 10px;
+  padding-left: 5px;
 }
 
 .chart-wrapper {
