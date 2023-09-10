@@ -26,14 +26,20 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
 
                 if (value > currentMax) {
                     currentMax = value;
+                    if (date > lastMaxTimestamp){
+                        maxChangeCount++;
+                    }
                     lastMaxTimestamp = date;
-                    maxChangeCount++;
+                    
                 }
             
                 if (value < currentMin) {
                     currentMin = value;
+                    if (date > lastMinTimestamp){
+                        minChangeCount++;
+                    }
                     lastMinTimestamp = date;
-                    minChangeCount++;
+                    
                 }
                 maxLineData.push(currentMax);
                 minLineData.push(currentMin);
