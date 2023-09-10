@@ -11,6 +11,7 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
             const values = [];
             const localPaperURLs = [];
             const localPaperTitles = [];
+            const localPaperModels = [];
 
             let currentMax = -Infinity;
             let currentMin = Infinity;
@@ -19,10 +20,11 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
             const maxLineData = [];
             const minLineData = [];
 
-            metricArray.forEach(({ date, value, paper_url, paper_title }) => {
+            metricArray.forEach(({ date, value, paper_url, paper_title, model_name }) => {
                 values.push(value);
                 localPaperURLs.push(paper_url);
                 localPaperTitles.push(paper_title);
+                localPaperModels.push(model_name)
 
                 if (value > currentMax) {
                     currentMax = value;
@@ -50,6 +52,7 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
                 data: values,
                 paperURLs: localPaperURLs,
                 paperTitles: localPaperTitles,
+                paperModels: localPaperModels,
                 tension: 0.4,
                 borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
                 borderWidth: 0,
@@ -100,7 +103,7 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
                             const datasetIndex = tooltipItem[0].datasetIndex;
                             const index = tooltipItem[0].dataIndex;
                             const paperDate = moment(tooltipItem[0].parsed.x).format('YYYY-MM-DD');
-                            return `Date: ${paperDate}\nTitle: ${chart.data.datasets[datasetIndex].paperTitles[index]}`;
+                            return `Date: ${paperDate}\nTitle: ${chart.data.datasets[datasetIndex].paperTitles[index]}\nModel: ${chart.data.datasets[datasetIndex].paperModels[index]}`;
                         },
                         footer: function (tooltipItem) {
                             const datasetIndex = tooltipItem[0].datasetIndex;
