@@ -15,7 +15,15 @@
 
 <body>
     <input type="text" id="searchBar" placeholder="Search...">
-
+    <nav class="nav">
+        <div class="nav-left">
+            <a class="brand" href="#">ML State Of The Art</a>
+            <div class="tabs">
+                <a id="sortRecent" class="active">Recent</a>
+                <a id="sortInteresting">Notable</a>
+            </div>
+        </div>
+    </nav>
     {% if data %}
     <div class="chart-container"> <!-- Container for all graphs -->
 
@@ -28,8 +36,9 @@
         {% set title = datasetName ~ " - " ~ metricName %}
         {% set show_title = false %}
         {% set show_legend = false %}
-        <div class="chart-wrapper"> <!-- Individual graph container -->
-            <h2 class="chart-category">{{ task }}</h2>
+        <div class="chart-wrapper" data-last_change="{{ data_dict['last_change'] }}"
+            data-last_date="{{ data_dict['last_date'] }}"> <!-- Individual graph container -->
+            <h2 class=" chart-category">{{ task }}</h2>
             <h3 class="chart-title">
                 {% if data_dict['dataset_links'] %}
                 <a href="{{ data_dict['dataset_links']['url'] }}" target="_blank">{{ title }}</a>
@@ -37,11 +46,11 @@
                 {{ title }}
                 {% endif %}
             </h3> <!-- Link to dataset -->
-            <div class="graph-placeholder" id="{{ canvas_id ~ 'div'}}" data-graph_data="{{ graph_data | tojson | urlencode }}"
-                data-canvas_id="{{ canvas_id }}"
+            <div class="graph-placeholder" id="{{ canvas_id ~ 'div'}}"
+                data-graph_data="{{ graph_data | tojson | urlencode }}" data-canvas_id="{{ canvas_id }}"
                 data-show_title="{{ show_title | tojson }}" data-title="{{ title }}"
                 data-show_legend="{{ show_legend | tojson }}" data-datasetName="{{ datasetName }}"
-                data-metricName="{{ metricName }}" data-task="{{ task }}">
+                data-metricName="{{ metricName }}" data-task="{{ task }}" data-type="{{ data_dict['type'] }}">
                 <!-- Placeholder for the chart. -->
 
             </div>
@@ -52,23 +61,23 @@
     <p>No data available.</p>
     {% endif %}
     <script>
-            const searchBar = document.getElementById('searchBar');
-            const chartContainer = document.querySelector('.chart-container');
+        const searchBar = document.getElementById('searchBar');
+        const chartContainer = document.querySelector('.chart-container');
 
-            searchBar.addEventListener('keyup', function (e) {
-                const searchString = e.target.value.toLowerCase();
+        searchBar.addEventListener('keyup', function (e) {
+            const searchString = e.target.value.toLowerCase();
 
-                Array.from(chartContainer.children).forEach(graph => {
-                    const task = graph.querySelector('.chart-category') ? graph.querySelector('.chart-category').textContent.toLowerCase() : '';
-                    const title = graph.querySelector('.chart-title') ? graph.querySelector('.chart-title').textContent.toLowerCase() : '';
+            Array.from(chartContainer.children).forEach(graph => {
+                const task = graph.querySelector('.chart-category') ? graph.querySelector('.chart-category').textContent.toLowerCase() : '';
+                const title = graph.querySelector('.chart-title') ? graph.querySelector('.chart-title').textContent.toLowerCase() : '';
 
-                    if (task.includes(searchString) || title.includes(searchString)) {
-                        graph.style.display = 'block';
-                    } else {
-                        graph.style.display = 'none';
-                    }
-                });
+                if (task.includes(searchString) || title.includes(searchString)) {
+                    graph.style.display = 'block';
+                } else {
+                    graph.style.display = 'none';
+                }
             });
+        });
 
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -86,6 +95,7 @@
                         const datasetName = target.getAttribute('data-datasetName');
                         const metricName = target.getAttribute('data-metricName');
                         const task = target.getAttribute('data-task');
+                        const type = target.getAttribute('data-type');
 
                         // Insert a canvas inside the placeholder div
                         const canvas = document.createElement('canvas');
@@ -93,7 +103,7 @@
                         target.appendChild(canvas);
 
                         // Render the chart
-                        renderGraph(canvas_id, graph_data, show_title, title, show_legend, datasetName, metricName, task);
+                        renderGraph(canvas_id, graph_data, show_title, title, show_legend, datasetName, metricName, task, type);
 
                         // Stop observing the target
                         observer.unobserve(target);

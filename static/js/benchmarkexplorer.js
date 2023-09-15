@@ -1,5 +1,5 @@
 
-function renderGraph(canvas_id, graph_data, show_title, title, show_legend, datasetName, metricName, task) {
+function renderGraph(canvas_id, graph_data, show_title, title, show_legend, datasetName, metricName, task,type) {
 
     const data = graph_data
     const datasets = [];
@@ -61,7 +61,7 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
                 pointHoverBorderWidth: 2 // hover border width
             });
 
-            if (maxChangeCount > minChangeCount) {
+            if (type == 'max') {
                 datasets.push({
                     label: `${datasetName} - ${metricName} (Max Line)`,
                     data: maxLineData,
@@ -125,3 +125,34 @@ function renderGraph(canvas_id, graph_data, show_title, title, show_legend, data
         },
     });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.chart-container');
+
+    document.getElementById('sortRecent').addEventListener('click', function() {
+        const divs = Array.from(container.querySelectorAll('.chart-wrapper'));
+        divs.sort((a, b) => new Date(b.getAttribute('data-last_date')) - new Date(a.getAttribute('data-last_date')));
+        divs.forEach((div, index) => {
+            div.style.order = index;
+        });
+    });
+
+    document.getElementById('sortInteresting').addEventListener('click', function() {
+        const divs = Array.from(container.querySelectorAll('.chart-wrapper'));
+        divs.sort((a, b) => {
+            const lastChangeA = parseFloat(a.getAttribute('data-last_change'));
+            const lastChangeB = parseFloat(b.getAttribute('data-last_change'));
+            const lastDateA = new Date(a.getAttribute('data-last_date'));
+            const lastDateB = new Date(b.getAttribute('data-last_date'));
+            const today = new Date();
+            const daysOldA = (today - lastDateA) / (1000 * 3600 * 24);
+            const daysOldB = (today - lastDateB) / (1000 * 3600 * 24);
+            const ratioA = lastChangeA / daysOldA;
+            const ratioB = lastChangeB / daysOldB;
+            return ratioB - ratioA;
+        });
+        divs.forEach((div, index) => {
+            div.style.order = index;
+        });
+    });
+});
