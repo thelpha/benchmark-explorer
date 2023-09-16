@@ -1,3 +1,8 @@
+function updateActiveTab(selectedId) {
+    const tabs = document.querySelectorAll('.tabs a');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    document.getElementById(selectedId).classList.add('active');
+}
 
 function renderGraph(canvas_id, graph_data, show_title, title, show_legend, datasetName, metricName, task,type) {
 
@@ -135,6 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
         divs.forEach((div, index) => {
             div.style.order = index;
         });
+        updateActiveTab('sortRecent');
+
     });
 
     document.getElementById('sortInteresting').addEventListener('click', function() {
@@ -154,5 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         divs.forEach((div, index) => {
             div.style.order = index;
         });
+        updateActiveTab('sortInteresting');
+
     });
 });
